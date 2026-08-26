@@ -25,14 +25,12 @@ def run_session(session_name):
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] Starting {session_name} Session...")
 
     engine = SignalEngine()
-    # Generates 10 to 15 top quality signals
     signals = engine.generate_filtered_signals(session_start_time=now, target_count=12)
 
     if not signals:
         print("No valid high-probability signals found.")
         return
 
-    # Header & Formatting
     msg = f"📊 *QUOTEX OTC HIGH-ACCURACY SIGNALS*\n"
     msg += f"📅 Date: `{now.strftime('%d-%m-%Y')}` | Session: *{session_name}*\n"
     msg += f"⏰ Timezone: *Asia/Dhaka (BST)*\n"
@@ -46,11 +44,8 @@ def run_session(session_name):
     msg += f"-----------------------------------------\n"
     msg += f"⚠️ *Rule:* Prioritize Direct Entry. Use 1-Step MTG only as Safety Net."
 
-    # Post Signal List 15 mins before session
     send_telegram_message(msg)
     print("Signal List Posted Successfully.")
-
-    # Save session signals locally for report evaluation
     return signals
 
 def run_report(signals):
@@ -93,12 +88,6 @@ def run_report(signals):
     send_telegram_message(report_msg)
     print("Report Posted Successfully.")
 
-MD Nazmul Hossain <nazmul4hossain1@gmail.com>
-	
-1:51 PM (0 minutes ago)
-	
-	
-to me
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "report":
         dummy_engine = SignalEngine()
