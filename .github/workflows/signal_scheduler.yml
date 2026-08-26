@@ -1,33 +1,58 @@
-import random
-from datetime import datetime, timedelta
-from config import TIMEZONE
+name: Quotex OTC Signal & Report Scheduler
 
-class SignalEngine:
-    def __init__(self):
-        self.real_pairs = ["EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD", "USD/CAD", "USD/CHF", "EUR/JPY", "GBP/JPY"]
-        self.otc_pairs = [p + " OTC" for p in self.real_pairs]
+on:
+  schedule:
+    - cron: '15 3 * * *'
+    - cron: '35 4 * * *'
+    - cron: '15 14 * * *'
+    - cron: '35 15 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      action_type:
+        description: 'Choose Action (signal or report)'
+        required: true
+        default: 'signal'
+        type: choice
+        options:
+          - signal
+          - report
 
-    def is_otc_market(self, dt):
-        return dt.weekday() >= 5
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    def generate_filtered_signals(self, session_start_time, target_count=10):
-        signals = []
-        is_otc = self.is_otc_market(session_start_time)
-        pairs_to_use = self.otc_pairs if is_otc else self.real_pairs
-        
-        current_time = session_start_time + timedelta(minutes=4)
-        directions = ["CALL", "PUT"]
-        
-        for i in range(target_count):
-            sig_time = current_time.strftime("%H:%M")
-            pair = pairs_to_use[i % len(pairs_to_use)]
-            direction = directions[i % 2]
-            
-            signals.append({
-                "time": sig_time,
-                "pair": pair,
-                "direction": direction
-            })
-            current_time += timedelta(minutes=4)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-        return signals
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execute Bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          # If triggered manually via workflow_dispatch
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            if [ "${{ github.event.inputs.action_type }}" == "report" ]; then
+              python bot_main.py report
+            else
+              python bot_main.py
+            fi
+          else
+            # Automatic cron schedule logic
+            HOUR=$(date -u +%H)
+            if [ "$HOUR" -eq 3 ] || [ "$HOUR" -eq 14 ]; then
+              python bot_main.py
+            else
+              python bot_main.py report
+            fi
+          fi
