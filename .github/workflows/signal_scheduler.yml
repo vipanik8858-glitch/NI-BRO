@@ -1,5 +1,4 @@
-import json
-import os
+import random
 from datetime import datetime, timedelta
 from config import TIMEZONE
 
@@ -7,7 +6,6 @@ class SignalEngine:
     def __init__(self):
         self.real_pairs = ["EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD", "USD/CAD", "USD/CHF", "EUR/JPY", "GBP/JPY"]
         self.otc_pairs = [p + " OTC" for p in self.real_pairs]
-        self.storage_file = "last_session.json"
 
     def is_otc_market(self, dt):
         return dt.weekday() >= 5
@@ -32,14 +30,4 @@ class SignalEngine:
             })
             current_time += timedelta(minutes=4)
 
-        # সিগন্যাল ফাইলটিতে স্থায়ীভাবে সেভ রাখা হচ্ছে যেন রির্পোট ভুল না হয়
-        with open(self.storage_file, "w") as f:
-            json.dump(signals, f)
-
         return signals
-
-    def load_saved_signals(self):
-        if os.path.exists(self.storage_file):
-            with open(self.storage_file, "r") as f:
-                return json.load(f)
-        return []
