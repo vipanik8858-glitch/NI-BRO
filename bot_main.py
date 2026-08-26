@@ -93,19 +93,16 @@ def run_report(signals):
     send_telegram_message(report_msg)
     print("Report Posted Successfully.")
 
+MD Nazmul Hossain <nazmul4hossain1@gmail.com>
+	
+1:51 PM (0 minutes ago)
+	
+	
+to me
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "report":
-        # Simulates evaluating last session
         dummy_engine = SignalEngine()
         signals = dummy_engine.generate_filtered_signals(datetime.now(TIMEZONE), 10)
         run_report(signals)
     else:
         run_session("LIVE")
-  # Test Run: Force send signals regardless of time
-    if len(sys.argv) > 1 and sys.argv[1] == "report":
-        dummy_engine = SignalEngine()
-        signals = dummy_engine.generate_filtered_signals(datetime.now(TIMEZONE), 10)
-        run_report(signals)
-    else:
-        # Force session run for instant test
-        run_session("TEST SESSION")
