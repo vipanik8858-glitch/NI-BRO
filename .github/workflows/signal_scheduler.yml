@@ -2,15 +2,21 @@ name: Quotex OTC Signal & Report Scheduler
 
 on:
   schedule:
-    # Morning Session: Signal at 09:15 AM BST (03:15 UTC), Report at 10:35 AM BST (04:35 UTC)
     - cron: '15 3 * * *'
     - cron: '35 4 * * *'
-    
-    # Night Session: Signal at 08:15 PM BST (14:15 UTC), Report at 09:35 PM BST (15:35 UTC)
     - cron: '15 14 * * *'
     - cron: '35 15 * * *'
   
-  workflow_dispatch: # Manual Run Option
+  workflow_dispatch:
+    inputs:
+      action_type:
+        description: 'Choose Action (signal or report)'
+        required: true
+        default: 'signal'
+        type: choice
+        options:
+          - signal
+          - report
 
 jobs:
   run-bot:
@@ -29,15 +35,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Execute Signal Engine
+      - name: Execute Bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Checks UTC hour to decide whether to send Signals or Report
-          HOUR=$(date -u +%H)
-          if [ "$HOUR" -eq 3 ] || [ "$HOUR" -eq 14 ]; then
-            python bot_main.py
+          # If triggered manually via workflow_dispatch
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            if [ "${{ github.event.inputs.action_type }}" == "report" ]; then
+              python bot_main.py report
+            else
+              python bot_main.py
+            fi
           else
-            python bot_main.py report
+            # Automatic cron schedule logic
+            HOUR=$(date -u +%H)
+            if [ "$HOUR" -eq 3 ] || [ "$HOUR" -eq 14 ]; then
+              python bot_main.py
+            else
+              python bot_main.py report
+            fi
           fi
