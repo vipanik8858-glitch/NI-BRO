@@ -1,5 +1,4 @@
 import sys
-import time
 import requests
 from datetime import datetime
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TIMEZONE
@@ -25,13 +24,12 @@ def run_session(session_name):
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] Starting {session_name} Session...")
 
     engine = SignalEngine()
-    signals = engine.generate_filtered_signals(session_start_time=now, target_count=12)
+    signals = engine.generate_filtered_signals(session_start_time=now, target_count=10)
 
-    if not signals:
-        print("No valid high-probability signals found.")
-        return
+    is_otc = engine.is_otc_market(now)
+    market_type = "OTC MARKET" if is_otc else "REAL MARKET"
 
-    msg = f"📊 *QUOTEX OTC HIGH-ACCURACY SIGNALS*\n"
+    msg = f"📊 *QUOTEX {market_type} HIGH-ACCURACY SIGNALS*\n"
     msg += f"📅 Date: `{now.strftime('%d-%m-%Y')}` | Session: *{session_name}*\n"
     msg += f"⏰ Timezone: *Asia/Dhaka (BST)*\n"
     msg += f"⏳ Expiry: *1 MINUTE*\n"
@@ -46,13 +44,16 @@ def run_session(session_name):
 
     send_telegram_message(msg)
     print("Signal List Posted Successfully.")
-    return signals
 
-def run_report(signals):
-    if not signals:
-        return
+def run_report():
+    engine = SignalEngine()
+    signals = engine.load_saved_signals()
     
-    print("Evaluating session performance for auto-reporting...")
+    if not signals:
+        print("No saved signals found for reporting.")
+        return
+
+    print("Evaluating saved session performance for auto-reporting...")
     fetcher = QuotexDataFetcher()
     
     direct_wins = 0
@@ -90,8 +91,6 @@ def run_report(signals):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "report":
-        dummy_engine = SignalEngine()
-        signals = dummy_engine.generate_filtered_signals(datetime.now(TIMEZONE), 10)
-        run_report(signals)
+        run_report()
     else:
         run_session("LIVE")
