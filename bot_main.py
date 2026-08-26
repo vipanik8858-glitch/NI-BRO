@@ -101,3 +101,11 @@ if __name__ == "__main__":
         run_report(signals)
     else:
         run_session("LIVE")
+  # Test Run: Force send signals regardless of time
+    if len(sys.argv) > 1 and sys.argv[1] == "report":
+        dummy_engine = SignalEngine()
+        signals = dummy_engine.generate_filtered_signals(datetime.now(TIMEZONE), 10)
+        run_report(signals)
+    else:
+        # Force session run for instant test
+        run_session("TEST SESSION")
